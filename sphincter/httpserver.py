@@ -18,14 +18,10 @@ class SphincterHTTPRequestHandler(BaseHTTPRequestHandler):
             self.send_error(400, "ACTION NOT SPECIFIED")
             return
             
-        if params["action"] not in ["open", "close", "state"]:
+        if params["action"] not in ["open"]:
             self.send_error(400, "INVALID ACTION")
             return
 
-        if params["action"] == "state":
-            self.respond(200, self.server.serial_handler.state)
-            return
-        
         if "token" not in params.keys():
             self.respond(401, "NO TOKEN")
             return
@@ -42,16 +38,6 @@ class SphincterHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.respond(200, "UNLOCKED")
             else:
                 self.respond(503, "FAILED")
-            return
-        elif params["action"] == "close":
-            r = SphincterRequest(REQUEST_CLOSE)
-            self.server._request_queue.append(r)
-            r.event.wait()
-            if r.success:
-                self.respond(200, "LOCKED")
-            else:
-                self.respond(503, "FAILED")
-
             return
         elif params["action"] == "test":
             self.respond(200, "OK")

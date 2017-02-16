@@ -52,11 +52,6 @@ class SphincterRequestHandler(Thread):
                     self.serial_handler.open()
                     self.serial_handler.open_event.wait()
 
-                elif r.request_type == REQUEST_CLOSE:
-                    logging.info("Closing Sphincter")
-                    self.serial_handler.close()
-                    self.serial_handler.closed_event.wait()
-
                 self.request_queue.set_all(r.request_type)
                 r.event.set()
 

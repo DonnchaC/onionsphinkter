@@ -42,9 +42,9 @@ if __name__ == "__main__":
     conf = SphincterConfig(args.configfile)
     config_params = conf.__dict__.keys()
 
-    if "device" not in config_params:
-        logging.critical("device parameter not in config file")
-        exit(1)
+    #if "device" not in config_params:
+    #    logging.critical("device parameter not in config file")
+    #    exit(1)
 
     if "loglevel" not in config_params:
         logging.critical("loglevel parameter not in config file")
