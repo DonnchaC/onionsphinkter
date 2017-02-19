@@ -92,6 +92,11 @@ if __name__ == "__main__":
 
     um = UserManager(dbpath="sqlite:///"+path.join(path.abspath(path.dirname(__file__)), "sphincter.sqlite"))
 
+    if args.initdb:
+        um.create_tables()
+        print "Database initialized"
+        exit(0)
+
     if args.adduser != "":
         print "Adding user ", args.adduser
         token = random_token(32)
