@@ -12,6 +12,7 @@ from sphincter.gpio_connection import SphincterGPIOHandler
 from sphincter.requestqueue import SphincterRequestQueue, SphincterRequestHandler
 from sphincter.httpserver import SphincterHTTPServerRunner
 from sphincter.authentication import UserManager
+from sphincter.authentication import random_token
 from sphincter.config import SphincterConfig
 import hooks
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
                          help="Path to configuration file")
     aparser.add_argument("--initdb", action="store_true", help="create database")
     aparser.add_argument("--test-hook", action="store", help="test hooks")
-
+    aparser.add_argument("--adduser", action="store", help="add user")
     args = aparser.parse_args()
 
     if args.test_hook is not None:
@@ -90,6 +91,13 @@ if __name__ == "__main__":
     s = SphincterGPIOHandler()
 
     um = UserManager(dbpath="sqlite:///"+path.join(path.abspath(path.dirname(__file__)), "sphincter.sqlite"))
+
+    if args.adduser != "":
+        print "Adding user ", args.adduser
+        token = random_token(32)
+        um.add_user(args.adduser, token)
+        print "Token: ", token
+        exit(0)
 
     q = SphincterRequestQueue()
     r = SphincterRequestHandler(q, s)
