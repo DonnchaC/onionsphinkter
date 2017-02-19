@@ -50,7 +50,6 @@ class SphincterRequestHandler(Thread):
                 if r.request_type == REQUEST_OPEN:
                     logging.info("Opening Sphincter")
                     self.serial_handler.open()
-                    self.serial_handler.open_event.wait()
 
                 self.request_queue.set_all(r.request_type)
                 r.event.set()
