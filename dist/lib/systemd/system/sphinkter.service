@@ -1,0 +1,11 @@
+[Unit]
+Description=Sphinkter
+After=network.target
+
+[Service]
+ExecStart=/usr/share/sphinkter/sphincterd.py
+Restart=on-failure
+
+[Install]
+Alias=sphinkter.service
+
