@@ -10,7 +10,7 @@ class SphincterGPIOHandler:
     """
     Encapsulate Sphincter's Serial connection.
     """
-    def __init__(self, unlock_pin=15):
+    def __init__(self, unlock_pin=10):
         # init events
         self.open_event = Event()
         self._unlock_pin = unlock_pin
