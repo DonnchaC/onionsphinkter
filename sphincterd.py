@@ -1,4 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
+
+import sys
+
+if sys.version_info[0] < 3:
+    raise ImportError('Python < 3 is not supported.')
 
 import logging
 from time import sleep
@@ -19,12 +24,14 @@ import hooks
 if __name__ == "__main__":
     aparser = ArgumentParser(prog="sphincterd",
                              description="Spincter control daemon")
-    aparser.add_argument("--configfile", action="store", 
+    aparser.add_argument("--configfile", action="store",
                          default=path.join(path.abspath(path.dirname(__file__)), "sphincterd.conf"),
                          help="Path to configuration file")
-    aparser.add_argument("--initdb", action="store_true", help="create database")
-    aparser.add_argument("--test-hook", action="store", help="test hooks")
-    aparser.add_argument("--adduser", action="store", help="add user")
+    aparser.add_argument("--initdb", action="store_true", help="Create a new database.")
+    aparser.add_argument("--test-hook", action="store", choices=["open", "closed", "failure"], help="Test hooks.")
+    aparser.add_argument("--adduser", action="store", help="Add new user.")
+    aparser.add_argument("--deluser", action="store", help="Delete existing user.")
+    aparser.add_argument("--listusers", action="store_true", help="List all users.")
     args = aparser.parse_args()
 
     if args.test_hook is not None:
@@ -63,11 +70,12 @@ if __name__ == "__main__":
     elif conf.loglevel == "CRITICAL":
         loglevel = logging.CRITICAL
     else:
-        logging.critical("Unknown loglevel %s" % conf.loglevel)
+        logging.critical("Unknown loglevel {}".format(conf.loglevel))
         exit(1)
 
+    logfile = "/var/log/sphincterd.log"
     logging.basicConfig(level=logging.INFO,
-                        filename='/var/log/sphincterd.log',
+                        filename=logfile,
                         format='%(asctime)s - %(levelname)8s - %(threadName)s/%(funcName)s - %(message)s',
                         datefmt="%Y-%m-%d %H:%M")
     logging.info("ohai, this is sphincterd")
@@ -85,31 +93,52 @@ if __name__ == "__main__":
     try:
         listen_port = int(conf.portnumber)
     except ValueError:
-        logging.critical("couldn't parse port number parameter")
+        logging.critical("Could not parse port number parameter: {}".format(conf.portnumber))
         exit(1)
 
     s = SphincterGPIOHandler()
 
-    um = UserManager(dbpath="sqlite:///"+path.join(path.abspath(path.dirname(__file__)), "sphincter.sqlite"))
+    um = UserManager(dbpath="sqlite:///{}".format(path.join(path.abspath(path.dirname(__file__)), "sphincter.sqlite")))
 
     if args.initdb:
         um.create_tables()
-        print "Database initialized"
+        print("Database initialized: {}".format(um.engine.url))
         exit(0)
 
-    if args.adduser != "":
-        print "Adding user ", args.adduser
-        token = random_token(32)
-        um.add_user(args.adduser, token)
-        print "Token: ", token
+    if args.adduser:
+        token = random_token(32).encode('utf-8')
+        user = um.add_user(args.adduser, token)
+        if user is not None:
+            print("Adding user {}".format(user.email))
+            exit(0)
+        else:
+            print("User already exits!")
+            exit(1)
+
+    if args.deluser:
+        user = um.del_user(args.deluser)
+        if user is not None:
+            print("Delete user {}".format(user.email))
+            exit(0)
+        else:
+            print("User not found!")
+            exit(1)
+
+    if args.listusers:
+        users = um.get_users()
+        for user in users:
+            print("{}".format(user.email))
+        print("Found {} users".format(users.count()))
         exit(0)
 
     q = SphincterRequestQueue()
     r = SphincterRequestHandler(q, s)
     r.start()
 
+    print("Log to {}".format(logfile))
+    print("Start webserver on {}:{}".format(listen_address, listen_port))
     SphincterHTTPServerRunner.start_thread((listen_address, listen_port), q, s, um)
-    
+
     # run timer hook
     class TimerThread(Thread):
         def __init__(self, serial_handler):

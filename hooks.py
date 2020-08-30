@@ -4,7 +4,7 @@
 import logging
 
 def open_hook():
-   pass
+    pass
 
 def closed_hook():
     pass
